@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upanita Barman — Job Application Tracker</title>
+  <style>
+    :root {
+      --bg: #0f0f13;
+      --surface: #1a1a24;
+      --surface2: #22222f;
+      --border: #2e2e42;
+      --accent: #7c6af7;
+      --accent2: #a78bfa;
+      --green: #22c55e;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --blue: #3b82f6;
+      --purple: #8b5cf6;
+      --text: #e2e2f0;
+      --muted: #888899;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      padding: 2rem 2rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #a78bfa, #7c6af7, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    header p {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-top: 0.25rem;
+    }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      max-width: 1200px;
+      margin: 1.5rem auto 0;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.75rem;
+      padding: 0 2rem;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      text-align: center;
+    }
+    .stat-card .num {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--accent2);
+    }
+    .stat-card .label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 0.2rem;
+    }
+
+    /* ── Main layout ── */
+    main {
+      max-width: 1200px;
+      margin: 1.5rem auto 4rem;
+      padding: 0 2rem;
+    }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+    .toolbar input[type="text"] {
+      flex: 1;
+      min-width: 200px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+      color: var(--text);
+      font-size: 0.875rem;
+      outline: none;
+    }
+    .toolbar input[type="text"]:focus { border-color: var(--accent); }
+    .toolbar select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.6rem 0.875rem;
+      color: var(--text);
+      font-size: 0.875rem;
+      outline: none;
+      cursor: pointer;
+    }
+    .toolbar select:focus { border-color: var(--accent); }
+    .btn {
+      padding: 0.6rem 1.25rem;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    /* ── Table ── */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    thead { background: var(--surface2); }
+    th {
+      padding: 0.85rem 1rem;
+      text-align: left;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+    th:hover { color: var(--text); }
+    td {
+      padding: 0.85rem 1rem;
+      border-top: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tr:hover td { background: rgba(124, 106, 247, 0.05); }
+
+    /* ── Status badges ── */
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.65rem;
+      border-radius: 100px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge-wishlist   { background: rgba(139,92,246,0.2);  color: #a78bfa; }
+    .badge-applied    { background: rgba(59,130,246,0.2);  color: #60a5fa; }
+    .badge-phone      { background: rgba(245,158,11,0.2);  color: #fbbf24; }
+    .badge-interview  { background: rgba(245,158,11,0.3);  color: #f59e0b; }
+    .badge-offer      { background: rgba(34,197,94,0.2);   color: #4ade80; }
+    .badge-rejected   { background: rgba(239,68,68,0.2);   color: #f87171; }
+    .badge-ghosted    { background: rgba(100,100,120,0.2); color: #888899; }
+
+    /* ── ATS score bar ── */
+    .ats-wrap { display: flex; align-items: center; gap: 0.5rem; }
+    .ats-bar { width: 60px; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .ats-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+    .ats-label { font-size: 0.8rem; font-weight: 600; min-width: 32px; }
+
+    .ats-high   .ats-fill { background: var(--green); }
+    .ats-mid    .ats-fill { background: var(--yellow); }
+    .ats-low    .ats-fill { background: var(--red); }
+    .ats-high   .ats-label { color: var(--green); }
+    .ats-mid    .ats-label { color: var(--yellow); }
+    .ats-low    .ats-label { color: var(--red); }
+
+    /* ── Action buttons ── */
+    .actions { display: flex; gap: 0.5rem; }
+    .icon-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.3rem 0.5rem;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 0.8rem;
+      transition: all 0.15s;
+    }
+    .icon-btn:hover { background: var(--surface2); color: var(--text); }
+    .icon-btn.del:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── Link ── */
+    a.job-link { color: var(--accent2); text-decoration: none; font-size: 0.8rem; }
+    a.job-link:hover { text-decoration: underline; }
+
+    /* ── Notes cell ── */
+    .note-text {
+      color: var(--muted);
+      font-size: 0.78rem;
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ── Empty state ── */
+    .empty {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--muted);
+    }
+    .empty .icon { font-size: 3rem; margin-bottom: 1rem; }
+    .empty h3 { font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--text); }
+
+    /* ── Modal ── */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal h2 { font-size: 1.2rem; margin-bottom: 1.5rem; color: var(--text); }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .form-grid .full { grid-column: 1 / -1; }
+    .field label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.4rem;
+    }
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.6rem 0.875rem;
+      color: var(--text);
+      font-size: 0.875rem;
+      outline: none;
+      font-family: inherit;
+    }
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus { border-color: var(--accent); }
+    .field textarea { resize: vertical; min-height: 70px; }
+    .modal-footer {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+      margin-top: 1.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Suggested jobs section ── */
+    .section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 2.5rem 0 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .suggestions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+    .suggestion-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      transition: border-color 0.15s;
+    }
+    .suggestion-card:hover { border-color: var(--accent); }
+    .suggestion-card .role { font-weight: 700; font-size: 0.95rem; color: var(--text); }
+    .suggestion-card .company { font-size: 0.82rem; color: var(--accent2); margin-top: 0.2rem; }
+    .suggestion-card .meta { font-size: 0.78rem; color: var(--muted); margin-top: 0.5rem; display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .suggestion-card .meta span::before { content: "· "; }
+    .suggestion-card .meta span:first-child::before { content: ""; }
+    .suggestion-card .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; }
+    .suggestion-card .ats-score-big { font-size: 0.8rem; font-weight: 700; }
+    .ats-green { color: var(--green); }
+    .ats-yellow { color: var(--yellow); }
+    .card-actions { display: flex; gap: 0.5rem; }
+    .btn-sm {
+      padding: 0.35rem 0.75rem;
+      font-size: 0.78rem;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-sm-primary { background: var(--accent); color: #fff; }
+    .btn-sm-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-sm:hover { opacity: 0.85; }
+
+    @media (max-width: 768px) {
+      .stats-bar { grid-template-columns: repeat(3, 1fr); }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-grid .full { grid-column: 1; }
+      table { font-size: 0.78rem; }
+      td, th { padding: 0.6rem 0.6rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <h1>Upanita Barman — Job Tracker</h1>
+    <p>GTM Engineer · Account Manager · B2B SaaS</p>
+  </div>
+</header>
+
+<div class="stats-bar" id="statsBar">
+  <div class="stat-card"><div class="num" id="s-total">0</div><div class="label">Total Applied</div></div>
+  <div class="stat-card"><div class="num" id="s-interview">0</div><div class="label">Interviews</div></div>
+  <div class="stat-card"><div class="num" id="s-offer">0</div><div class="label">Offers</div></div>
+  <div class="stat-card"><div class="num" id="s-rate">0%</div><div class="label">Response Rate</div></div>
+  <div class="stat-card"><div class="num" id="s-avg-ats">—</div><div class="label">Avg ATS Score</div></div>
+</div>
+
+<main>
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <input type="text" id="searchInput" placeholder="Search company, role, or notes…" oninput="renderTable()">
+    <select id="filterStatus" onchange="renderTable()">
+      <option value="">All Statuses</option>
+      <option>Wishlist</option>
+      <option>Applied</option>
+      <option>Phone Screen</option>
+      <option>Interview</option>
+      <option>Offer</option>
+      <option>Rejected</option>
+      <option>Ghosted</option>
+    </select>
+    <select id="filterType" onchange="renderTable()">
+      <option value="">All Types</option>
+      <option>GTM Engineer</option>
+      <option>Account Manager</option>
+      <option>Other</option>
+    </select>
+    <button class="btn btn-outline" onclick="exportCSV()">Export CSV</button>
+    <button class="btn btn-primary" onclick="openModal()">+ Add Application</button>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="sortBy('date')">Date ↕</th>
+          <th onclick="sortBy('company')">Company ↕</th>
+          <th onclick="sortBy('role')">Role ↕</th>
+          <th>Type</th>
+          <th onclick="sortBy('status')">Status ↕</th>
+          <th onclick="sortBy('salary')">Salary ↕</th>
+          <th onclick="sortBy('ats')">ATS Score ↕</th>
+          <th>Location</th>
+          <th>Link</th>
+          <th>Notes</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <div id="emptyState" class="empty" style="display:none">
+      <div class="icon">📋</div>
+      <h3>No applications yet</h3>
+      <p>Click "+ Add Application" to track your first job</p>
+    </div>
+  </div>
+
+  <!-- Suggested Jobs -->
+  <div class="section-title">⚡ Curated Target Companies — Add to Tracker</div>
+  <div class="suggestions-grid" id="suggestionsGrid"></div>
+</main>
+
+<!-- Modal -->
+<div class="modal-backdrop" id="modal">
+  <div class="modal">
+    <h2 id="modalTitle">Add Application</h2>
+    <div class="form-grid">
+      <div class="field">
+        <label>Company *</label>
+        <input type="text" id="f-company" placeholder="e.g. Cognism">
+      </div>
+      <div class="field">
+        <label>Role *</label>
+        <input type="text" id="f-role" placeholder="e.g. GTM Engineer">
+      </div>
+      <div class="field">
+        <label>Job Type</label>
+        <select id="f-type">
+          <option>GTM Engineer</option>
+          <option>Account Manager</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <select id="f-status">
+          <option>Wishlist</option>
+          <option>Applied</option>
+          <option>Phone Screen</option>
+          <option>Interview</option>
+          <option>Offer</option>
+          <option>Rejected</option>
+          <option>Ghosted</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Salary (£)</label>
+        <input type="number" id="f-salary" placeholder="e.g. 55000">
+      </div>
+      <div class="field">
+        <label>ATS Score (%)</label>
+        <input type="number" id="f-ats" min="0" max="100" placeholder="e.g. 85">
+      </div>
+      <div class="field">
+        <label>Location</label>
+        <input type="text" id="f-location" placeholder="e.g. London / Remote">
+      </div>
+      <div class="field">
+        <label>Date Applied</label>
+        <input type="date" id="f-date">
+      </div>
+      <div class="field full">
+        <label>Job URL</label>
+        <input type="url" id="f-url" placeholder="https://…">
+      </div>
+      <div class="field full">
+        <label>Notes</label>
+        <textarea id="f-notes" placeholder="Recruiter name, interview stage, follow-up date…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEntry()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Data ──────────────────────────────────────────────
+  const STORAGE_KEY = 'ub_job_tracker_v1';
+  let apps = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  let editId = null;
+  let sortKey = 'date';
+  let sortDir = -1;
+
+  const STATUS_BADGE = {
+    'Wishlist':     'wishlist',
+    'Applied':      'applied',
+    'Phone Screen': 'phone',
+    'Interview':    'interview',
+    'Offer':        'offer',
+    'Rejected':     'rejected',
+    'Ghosted':      'ghosted',
+  };
+
+  function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(apps)); }
+
+  function atsClass(v) {
+    if (v >= 75) return 'ats-high';
+    if (v >= 55) return 'ats-mid';
+    return 'ats-low';
+  }
+
+  function atsBar(score) {
+    if (score == null || score === '') return '<span style="color:var(--muted);font-size:0.78rem">—</span>';
+    const cls = atsClass(Number(score));
+    return `<div class="ats-wrap ${cls}">
+      <div class="ats-bar"><div class="ats-fill" style="width:${score}%"></div></div>
+      <span class="ats-label">${score}%</span>
+    </div>`;
+  }
+
+  function fmtSalary(s) {
+    if (!s) return '—';
+    return '£' + Number(s).toLocaleString('en-GB');
+  }
+
+  function fmtDate(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'2-digit'});
+  }
+
+  // ── Stats ─────────────────────────────────────────────
+  function updateStats() {
+    const total = apps.length;
+    const interviews = apps.filter(a => ['Interview','Offer'].includes(a.status)).length;
+    const offers = apps.filter(a => a.status === 'Offer').length;
+    const responded = apps.filter(a => !['Wishlist','Applied'].includes(a.status)).length;
+    const rate = total ? Math.round((responded / total) * 100) : 0;
+    const atsVals = apps.map(a => Number(a.ats)).filter(v => v > 0);
+    const avgAts = atsVals.length ? Math.round(atsVals.reduce((a,b)=>a+b,0)/atsVals.length) : null;
+
+    document.getElementById('s-total').textContent = total;
+    document.getElementById('s-interview').textContent = interviews;
+    document.getElementById('s-offer').textContent = offers;
+    document.getElementById('s-rate').textContent = rate + '%';
+    document.getElementById('s-avg-ats').textContent = avgAts ? avgAts + '%' : '—';
+  }
+
+  // ── Table render ──────────────────────────────────────
+  function renderTable() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const fStatus = document.getElementById('filterStatus').value;
+    const fType = document.getElementById('filterType').value;
+
+    let filtered = apps.filter(a => {
+      const match = (a.company+a.role+(a.notes||'')).toLowerCase().includes(q);
+      const st = !fStatus || a.status === fStatus;
+      const tp = !fType || a.type === fType;
+      return match && st && tp;
+    });
+
+    filtered.sort((a,b) => {
+      let av = a[sortKey] ?? '', bv = b[sortKey] ?? '';
+      if (sortKey === 'salary' || sortKey === 'ats') { av = Number(av)||0; bv = Number(bv)||0; }
+      if (av < bv) return sortDir;
+      if (av > bv) return -sortDir;
+      return 0;
+    });
+
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+
+    if (!filtered.length) {
+      document.getElementById('emptyState').style.display = 'block';
+    } else {
+      document.getElementById('emptyState').style.display = 'none';
+      filtered.forEach(a => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${fmtDate(a.date)}</td>
+          <td style="font-weight:600">${a.company}</td>
+          <td>${a.role}</td>
+          <td><span style="font-size:0.75rem;color:var(--muted)">${a.type||''}</span></td>
+          <td><span class="badge badge-${STATUS_BADGE[a.status]||'applied'}">${a.status}</span></td>
+          <td>${fmtSalary(a.salary)}</td>
+          <td>${atsBar(a.ats)}</td>
+          <td style="font-size:0.78rem;color:var(--muted)">${a.location||'—'}</td>
+          <td>${a.url ? `<a class="job-link" href="${a.url}" target="_blank" rel="noopener">View ↗</a>` : '—'}</td>
+          <td><div class="note-text" title="${(a.notes||'').replace(/"/g,'&quot;')}">${a.notes||'—'}</div></td>
+          <td>
+            <div class="actions">
+              <button class="icon-btn" onclick="openEdit('${a.id}')">✏️</button>
+              <button class="icon-btn del" onclick="deleteEntry('${a.id}')">🗑</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+    updateStats();
+  }
+
+  function sortBy(key) {
+    if (sortKey === key) sortDir *= -1;
+    else { sortKey = key; sortDir = -1; }
+    renderTable();
+  }
+
+  // ── Modal ─────────────────────────────────────────────
+  function openModal(prefill) {
+    editId = null;
+    document.getElementById('modalTitle').textContent = 'Add Application';
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('f-company').value = prefill?.company || '';
+    document.getElementById('f-role').value    = prefill?.role    || '';
+    document.getElementById('f-type').value    = prefill?.type    || 'GTM Engineer';
+    document.getElementById('f-status').value  = 'Applied';
+    document.getElementById('f-salary').value  = prefill?.salary  || '';
+    document.getElementById('f-ats').value     = prefill?.ats     || '';
+    document.getElementById('f-location').value= prefill?.location|| '';
+    document.getElementById('f-date').value    = today;
+    document.getElementById('f-url').value     = prefill?.url     || '';
+    document.getElementById('f-notes').value   = '';
+    document.getElementById('modal').classList.add('open');
+    document.getElementById('f-company').focus();
+  }
+
+  function openEdit(id) {
+    const a = apps.find(x => x.id === id);
+    if (!a) return;
+    editId = id;
+    document.getElementById('modalTitle').textContent = 'Edit Application';
+    document.getElementById('f-company').value = a.company;
+    document.getElementById('f-role').value    = a.role;
+    document.getElementById('f-type').value    = a.type || 'GTM Engineer';
+    document.getElementById('f-status').value  = a.status;
+    document.getElementById('f-salary').value  = a.salary || '';
+    document.getElementById('f-ats').value     = a.ats || '';
+    document.getElementById('f-location').value= a.location || '';
+    document.getElementById('f-date').value    = a.date || '';
+    document.getElementById('f-url').value     = a.url || '';
+    document.getElementById('f-notes').value   = a.notes || '';
+    document.getElementById('modal').classList.add('open');
+  }
+
+  function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+  function saveEntry() {
+    const company = document.getElementById('f-company').value.trim();
+    const role    = document.getElementById('f-role').value.trim();
+    if (!company || !role) { alert('Company and Role are required.'); return; }
+
+    const entry = {
+      id:       editId || crypto.randomUUID(),
+      company, role,
+      type:     document.getElementById('f-type').value,
+      status:   document.getElementById('f-status').value,
+      salary:   document.getElementById('f-salary').value,
+      ats:      document.getElementById('f-ats').value,
+      location: document.getElementById('f-location').value.trim(),
+      date:     document.getElementById('f-date').value,
+      url:      document.getElementById('f-url').value.trim(),
+      notes:    document.getElementById('f-notes').value.trim(),
+    };
+
+    if (editId) {
+      const idx = apps.findIndex(x => x.id === editId);
+      apps[idx] = entry;
+    } else {
+      apps.unshift(entry);
+    }
+    save();
+    closeModal();
+    renderTable();
+  }
+
+  function deleteEntry(id) {
+    if (!confirm('Delete this application?')) return;
+    apps = apps.filter(x => x.id !== id);
+    save();
+    renderTable();
+  }
+
+  // ── Export CSV ────────────────────────────────────────
+  function exportCSV() {
+    const headers = ['Date','Company','Role','Type','Status','Salary','ATS Score','Location','URL','Notes'];
+    const rows = apps.map(a => [
+      a.date, a.company, a.role, a.type, a.status,
+      a.salary ? '£'+a.salary : '', a.ats ? a.ats+'%' : '',
+      a.location, a.url, a.notes
+    ].map(v => `"${(v||'').replace(/"/g,'""')}"`).join(','));
+    const csv = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csv], {type:'text/csv'});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'job_applications.csv'; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── Suggested companies ───────────────────────────────
+  const SUGGESTIONS = [
+    { company:'Cognism', role:'Account Manager', type:'Account Manager', salary:'55000', ats:88, location:'London / Remote', note:'Strong Clay user fit, outbound-first culture' },
+    { company:'Apollo.io', role:'Account Manager UK', type:'Account Manager', salary:'60000', ats:90, location:'Remote (UK)', note:'You use their tool daily — powerful differentiator' },
+    { company:'Clay', role:'GTM Engineer / Solutions Engineer', type:'GTM Engineer', salary:'65000', ats:92, location:'Remote', note:'Clay Enterprise Partner experience is near-perfect fit' },
+    { company:'Salesloft', role:'Account Manager EMEA', type:'Account Manager', salary:'55000', ats:85, location:'London / Remote', note:'Salesforce + pipeline metrics align well' },
+    { company:'Gong', role:'Account Manager', type:'Account Manager', salary:'60000', ats:82, location:'London / Remote', note:'Revenue intelligence — good fit for your analytics background' },
+    { company:'Instantly.ai', role:'GTM Engineer', type:'GTM Engineer', salary:'50000', ats:88, location:'Remote', note:'You already use Instantly in your GTM stack' },
+    { company:'Dealfront', role:'Account Manager UK', type:'Account Manager', salary:'50000', ats:80, location:'Remote (UK)', note:'Glenigan experience directly comparable' },
+    { company:'Chili Piper', role:'Account Manager', type:'Account Manager', salary:'55000', ats:78, location:'Remote', note:'Revenue ops / pipeline focus matches your background' },
+    { company:'Outreach.io', role:'Account Manager EMEA', type:'Account Manager', salary:'60000', ats:83, location:'London / Remote', note:'EMEA territory experience at Parker is highly relevant' },
+    { company:'HubSpot', role:'Account Manager UK', type:'Account Manager', salary:'55000', ats:87, location:'London / Remote', note:'Certified HubSpot user — strong signal' },
+    { company:'Lemlist', role:'GTM Engineer', type:'GTM Engineer', salary:'50000', ats:85, location:'Remote', note:'Email outbound automation expertise is a perfect match' },
+    { company:'Pipedrive', role:'Account Manager UK', type:'Account Manager', salary:'50000', ats:80, location:'London / Remote', note:'CRM-native role suits your Salesforce background' },
+  ];
+
+  function renderSuggestions() {
+    const grid = document.getElementById('suggestionsGrid');
+    grid.innerHTML = '';
+    SUGGESTIONS.forEach(s => {
+      const atsColor = s.ats >= 85 ? 'ats-green' : 'ats-yellow';
+      const card = document.createElement('div');
+      card.className = 'suggestion-card';
+      card.innerHTML = `
+        <div class="role">${s.role}</div>
+        <div class="company">${s.company}</div>
+        <div class="meta">
+          <span>${s.location}</span>
+          <span>£${Number(s.salary).toLocaleString('en-GB')}+</span>
+          <span>${s.type}</span>
+        </div>
+        <div style="font-size:0.75rem;color:var(--muted);margin-top:0.6rem">${s.note}</div>
+        <div class="card-footer">
+          <span class="ats-score-big ${atsColor}">ATS Match: ${s.ats}%</span>
+          <div class="card-actions">
+            <button class="btn-sm btn-sm-primary" onclick='addSuggestion(${JSON.stringify(s)})'>+ Track</button>
+          </div>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  function addSuggestion(s) {
+    openModal({ company: s.company, role: s.role, type: s.type, salary: s.salary, ats: s.ats, location: s.location });
+  }
+
+  // Close modal on backdrop click
+  document.getElementById('modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  // ── Init ──────────────────────────────────────────────
+  renderTable();
+  renderSuggestions();
+</script>
+</body>
+</html>
