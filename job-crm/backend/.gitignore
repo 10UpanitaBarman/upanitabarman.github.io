@@ -1,0 +1,4 @@
+node_modules/
+db/crm.db
+db/crm.db-shm
+db/crm.db-wal
