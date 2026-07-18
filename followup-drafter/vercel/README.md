@@ -28,6 +28,13 @@ git push -u origin main
 
 ## 3. Add a Vercel KV store (this replaces the local digest.json file)
 
+Optional for seeing demo mode work (the dashboard's "Regenerate now" button
+computes a fresh digest on every click either way), but required for that
+digest to actually be cached and shown on page load without clicking
+regenerate every time -- and required for the daily Vercel Cron run to be
+visible anywhere, since a cron-triggered run has no UI to show its result
+in directly.
+
 1. In your Vercel project -> **Storage** tab -> **Create Database** ->
    **KV**.
 2. Create it, then **Connect** it to this project. Vercel automatically
