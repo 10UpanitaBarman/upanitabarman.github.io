@@ -1,0 +1,43 @@
+name: Seed demo data into HubSpot
+
+# Manual-only (no schedule): creates 3 fictional contacts and 3 overdue
+# tasks in your real HubSpot portal (see followup-drafter/local/seed-demo-data.js
+# for exactly what it creates), so the daily digest has real records to pull
+# instead of running in demo mode. Runs on GitHub's infrastructure using the
+# same repo secrets as the daily workflow, so the HubSpot token never has to
+# be typed into a chat or a local shell.
+#
+# Run it: this repo -> Actions tab -> "Seed demo data into HubSpot" -> Run
+# workflow. Requires HUBSPOT_TOKEN and HUBSPOT_OWNER_ID to already be set as
+# repo secrets (Settings -> Secrets and variables -> Actions) with a
+# private app token that has crm.objects.contacts.write and
+# crm.schemas.tasks.write in addition to the scopes in
+# followup-drafter/README.md. Safe to re-run for the contacts (looked up by
+# email first); re-running does create additional tasks each time, so
+# delete the old ones in HubSpot before reseeding if that matters to you.
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: followup-drafter/local
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: followup-drafter/local/package-lock.json
+
+      - run: npm ci
+
+      - name: Seed HubSpot with demo prospects
+        env:
+          HUBSPOT_TOKEN: ${{ secrets.HUBSPOT_TOKEN }}
+          HUBSPOT_OWNER_ID: ${{ secrets.HUBSPOT_OWNER_ID }}
+        run: npm run seed

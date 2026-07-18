@@ -59,6 +59,23 @@ Each folder has its own README with exact setup steps for that path.
      engagement ID
    Set both whenever you log a follow-up task, so the app knows where to
    pull that prospect's context from.
+6. Which contact a task is about comes from HubSpot's own task-contact
+   association (set automatically whenever you create the task from the
+   contact record's activity timeline, which is the normal way to log a
+   follow-up task) -- nothing extra to fill in for that part.
+
+### Don't have real overdue tasks to test against yet?
+
+[`.github/workflows/seed-demo-data.yml`](../.github/workflows/seed-demo-data.yml)
+(manual trigger only, from this repo's Actions tab) creates 3 fictional
+contacts and 3 overdue tasks -- the same Priya/Marcus/Elena examples used in
+demo mode, but as real HubSpot records with `context_source: manual`, so no
+Notion setup is required to see the live path work end to end. It needs the
+same `HUBSPOT_TOKEN`/`HUBSPOT_OWNER_ID` repo secrets as the daily workflow,
+plus two extra scopes on the private app that the daily run itself doesn't
+need: `crm.objects.contacts.write` and `crm.schemas.tasks.write`. See
+[`followup-drafter/local/seed-demo-data.js`](./local/seed-demo-data.js) for
+exactly what it creates.
 
 ### Connect Notion
 

@@ -111,7 +111,11 @@ async function hubspotFetch(method, url, body) {
 async function fetchOverdueTasks() {
   // Assumes two custom task properties: context_source ("notion" |
   // "hubspot_email" | "manual") and context_ref (a Notion page id or a
-  // HubSpot email engagement id). Set these when the task is logged.
+  // HubSpot email engagement id). Set these when the task is logged. Which
+  // contact the task is about comes from HubSpot's own task-contact
+  // association (set automatically when a task is created against a
+  // contact record in the UI) -- not a hand-maintained property, so there
+  // is nothing extra to remember to fill in per task.
   const body = {
     filterGroups: [{
       filters: [
@@ -119,14 +123,15 @@ async function fetchOverdueTasks() {
         { propertyName: 'hubspot_owner_id', operator: 'EQ', value: HUBSPOT_OWNER_ID },
       ],
     }],
-    properties: ['hs_task_subject', 'associated_contact_id', 'context_source', 'context_ref'],
+    properties: ['hs_task_subject', 'context_source', 'context_ref'],
   };
   const result = await hubspotFetch('POST', 'https://api.hubapi.com/crm/v3/objects/tasks/search', body);
   const tasks = [];
   for (const r of result.results || []) {
     const p = r.properties;
-    if (!p.associated_contact_id) continue;
-    const contact = await fetchContact(p.associated_contact_id);
+    const contactId = await fetchAssociatedContactId(r.id);
+    if (!contactId) continue;
+    const contact = await fetchContact(contactId);
     tasks.push({
       taskId: r.id,
       contact,
@@ -135,6 +140,13 @@ async function fetchOverdueTasks() {
     });
   }
   return tasks;
+}
+
+async function fetchAssociatedContactId(taskId) {
+  const url = `https://api.hubapi.com/crm/v4/objects/tasks/${taskId}/associations/contacts`;
+  const result = await hubspotFetch('GET', url);
+  const first = (result.results || [])[0];
+  return first ? first.toObjectId : null;
 }
 
 async function fetchContact(contactId) {

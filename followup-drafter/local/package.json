@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "generate": "node run-once.js"
+    "generate": "node run-once.js",
+    "seed": "node seed-demo-data.js"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
