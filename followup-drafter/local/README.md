@@ -56,22 +56,27 @@ anything real.
    `1a2b3c4d...` part is the ID. Put `notion: 1a2b3c4d...` as that task's
    Notes text.
 
-## Connect OpenAI
+## Connect an LLM (free, no billing)
 
-1. **platform.openai.com/api-keys** -> **Create new secret key**.
-2. Put it in `.env` as `OPENAI_API_KEY`. Note this needs billing set up on
-   the OpenAI account (separate page under Settings -> Billing).
+Default provider is **Groq** -- no credit card required.
+
+1. **console.groq.com/keys** -> log in -> **Create API Key**.
+2. Put it in `.env` as `GROQ_API_KEY`.
+
+Prefer OpenAI instead? Set `OPENAI_API_KEY` (platform.openai.com/api-keys,
+needs billing set up) and leave `GROQ_API_KEY` unset -- whichever is
+present is used, Groq taking priority if both are set.
 
 ## Full setup
 
 ```
 cp .env.example .env
-# open .env and fill in HUBSPOT_TOKEN, HUBSPOT_OWNER_ID, NOTION_TOKEN, OPENAI_API_KEY
+# open .env and fill in HUBSPOT_TOKEN, HUBSPOT_OWNER_ID, NOTION_TOKEN, GROQ_API_KEY
 npm install
 npm start
 ```
 
-Once all three tokens are set, the app automatically switches from demo mode
+Once HubSpot and one LLM key are set, the app automatically switches from demo mode
 to live mode, no code changes needed.
 
 ## Making it actually run every morning by itself

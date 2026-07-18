@@ -12,6 +12,8 @@ const {
   HUBSPOT_TOKEN,
   HUBSPOT_OWNER_ID,
   NOTION_TOKEN,
+  GROQ_API_KEY,
+  GROQ_MODEL = 'llama-3.1-8b-instant',
   OPENAI_API_KEY,
 } = process.env;
 
@@ -213,15 +215,23 @@ async function resolveContext(task) {
 }
 
 // ---------------------------------------------------------------------------
-// OpenAI
+// LLM -- Groq by default (free API key, no billing required, OpenAI-
+// compatible chat completions endpoint). Falls back to OpenAI if
+// OPENAI_API_KEY is set instead (paid, but a drop-in swap since the
+// request/response shape is identical). Whichever key is present wins;
+// GROQ_API_KEY takes priority if both are set.
 // ---------------------------------------------------------------------------
 
-async function callOpenAI(systemPrompt, userPrompt) {
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+async function callLLM(systemPrompt, userPrompt) {
+  const [url, apiKey, model] = GROQ_API_KEY
+    ? ['https://api.groq.com/openai/v1/chat/completions', GROQ_API_KEY, GROQ_MODEL]
+    : ['https://api.openai.com/v1/chat/completions', OPENAI_API_KEY, 'gpt-4o-mini'];
+
+  const res = await fetch(url, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', authorization: `Bearer ${OPENAI_API_KEY}` },
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({
-      model: 'gpt-4o-mini',
+      model,
       max_tokens: 300,
       temperature: 0.6,
       messages: [
@@ -230,7 +240,7 @@ async function callOpenAI(systemPrompt, userPrompt) {
       ],
     }),
   });
-  if (!res.ok) throw new Error(`OpenAI -> ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  if (!res.ok) throw new Error(`LLM (${model}) -> ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const data = await res.json();
   return data.choices[0].message.content.trim();
 }
@@ -273,7 +283,7 @@ function demoTasks() {
 // ---------------------------------------------------------------------------
 
 async function runPipeline() {
-  const liveMode = Boolean(HUBSPOT_TOKEN && OPENAI_API_KEY);
+  const liveMode = Boolean(HUBSPOT_TOKEN && (GROQ_API_KEY || OPENAI_API_KEY));
   let tasks;
 
   if (liveMode) {
@@ -281,7 +291,7 @@ async function runPipeline() {
     for (const task of tasks) {
       task.contextNote = await resolveContext(task);
       const userPrompt = buildUserPrompt(task);
-      task.draft = await callOpenAI(SYSTEM_PROMPT, userPrompt);
+      task.draft = await callLLM(SYSTEM_PROMPT, userPrompt);
       task.issues = validateDraft(task.draft, task.contact.firstName);
       await logDraftBackToHubSpot(task);
     }

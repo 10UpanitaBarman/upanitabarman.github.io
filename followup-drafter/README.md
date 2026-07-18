@@ -2,10 +2,12 @@
 
 Every morning: pulls Kim's overdue HubSpot tasks, resolves each prospect's
 context from a Notion page or a logged HubSpot email, drafts a short
-follow-up with OpenAI (following cold-email best practice: signal-based
-personalization, pain over features, one soft CTA, no closed loop), checks
-it against a style rubric (60-90 words, no em dashes, no contractions, asks
-to schedule a Teams call), and puts every draft on one dashboard. Nothing
+follow-up with an LLM (Groq by default -- free, no billing required;
+OpenAI works too if you'd rather pay for it) following cold-email best
+practice: signal-based personalization, pain over features, one soft CTA,
+no closed loop. Checks it against a style rubric (60-90 words, no em
+dashes, no contractions, asks to schedule a Teams call), and puts every
+draft on one dashboard. Nothing
 is ever sent automatically -- Kim reviews and sends herself.
 
 ## Three ways to run the daily schedule, pick one
@@ -92,11 +94,19 @@ exactly what it creates.
 5. Get the page ID from the page's URL: the 32-character string right
    before any `?`. That is the `context_ref` value for that task.
 
-### Connect OpenAI
+### Connect an LLM (free, no billing)
 
-1. **platform.openai.com/api-keys** -> **Create new secret key** -> this
-   is `OPENAI_API_KEY`. Needs billing set up on the OpenAI account
-   (Settings -> Billing).
+Default provider is **Groq** -- no credit card required, generous free
+rate limits, and its API is OpenAI-compatible so nothing else in the code
+changes.
+
+1. **console.groq.com/keys** -> log in -> **Create API Key** -> this is
+   `GROQ_API_KEY`.
+
+That's it -- no billing page, no card. If you'd rather use OpenAI instead
+(e.g. for a specific model), set `OPENAI_API_KEY` (platform.openai.com/api-keys,
+needs billing set up on the OpenAI account) and leave `GROQ_API_KEY` unset;
+whichever one is present is what gets used, Groq taking priority if both are.
 
 ### Connect Slack (only needed for the GitHub Actions path)
 
@@ -109,14 +119,14 @@ exactly what it creates.
 
 ### Wiring it into GitHub Actions
 
-The four HubSpot/Notion/OpenAI values above, plus `SLACK_WEBHOOK_URL`, need
-to exist as **repo secrets**, not a `.env` file, for the scheduled workflow
-to see them: this repo's **Settings** -> **Secrets and variables** ->
-**Actions** -> **New repository secret**, once for each of `HUBSPOT_TOKEN`,
-`HUBSPOT_OWNER_ID`, `NOTION_TOKEN`, `OPENAI_API_KEY`, `SLACK_WEBHOOK_URL`.
-Until they're set, the scheduled workflow still runs successfully every day
-in demo mode, so you can confirm the schedule itself fires correctly before
-connecting real accounts.
+The values above, plus `SLACK_WEBHOOK_URL`, need to exist as **repo
+secrets**, not a `.env` file, for the scheduled workflow to see them: this
+repo's **Settings** -> **Secrets and variables** -> **Actions** -> **New
+repository secret**, once for each of `HUBSPOT_TOKEN`, `HUBSPOT_OWNER_ID`,
+`NOTION_TOKEN`, `GROQ_API_KEY`, `SLACK_WEBHOOK_URL`. Until they're set, the
+scheduled workflow still runs successfully every day in demo mode, so you
+can confirm the schedule itself fires correctly before connecting real
+accounts.
 
 ## How to verify a token works, without wiring up the whole app
 
@@ -130,11 +140,12 @@ token or scopes are wrong.
 
 ## What triggers live mode vs. demo mode
 
-The app checks for `HUBSPOT_TOKEN` AND `OPENAI_API_KEY` together. Missing
-either one means it falls back to 3 example prospects (Priya, Marcus,
-Elena) so you can always see it working. If a specific task's
-`context_source` is `notion` but `NOTION_TOKEN` is not set, that one task's
-context resolution will fail even though HubSpot and OpenAI are working.
+The app checks for `HUBSPOT_TOKEN` AND (`GROQ_API_KEY` OR `OPENAI_API_KEY`)
+together. Missing the HubSpot token, or missing both LLM keys, means it
+falls back to 3 example prospects (Priya, Marcus, Elena) so you can always
+see it working. If a specific task's Notes field starts with `notion:` but
+`NOTION_TOKEN` is not set, that one task's context resolution will fail
+even though HubSpot and the LLM are working.
 
 ## Validation rules baked into every draft
 

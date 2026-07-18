@@ -50,11 +50,15 @@ Project -> **Settings** -> **Environment Variables**. Add:
 | `HUBSPOT_TOKEN` | from HubSpot private app (see main README for how to get it) |
 | `HUBSPOT_OWNER_ID` | Kim's HubSpot user/owner ID |
 | `NOTION_TOKEN` | from your Notion integration |
-| `OPENAI_API_KEY` | from platform.openai.com |
+| `GROQ_API_KEY` | from console.groq.com/keys -- free, no billing required |
+
+`GROQ_API_KEY` is the default LLM provider. Set `OPENAI_API_KEY` instead
+(platform.openai.com, needs billing) if you'd rather use OpenAI -- leave
+`GROQ_API_KEY` unset in that case, since Groq takes priority if both are set.
 
 Redeploy after adding these (Vercel doesn't hot-reload env vars into an
 already-deployed build). The app automatically switches to live mode once
-`HUBSPOT_TOKEN` and `OPENAI_API_KEY` are both present.
+`HUBSPOT_TOKEN` and one of the two LLM keys are present.
 
 ## 5. The schedule
 

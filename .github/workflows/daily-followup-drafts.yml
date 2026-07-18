@@ -2,17 +2,19 @@ name: Daily follow-up drafts
 
 # Runs the follow-up drafter pipeline once a day with no server to keep
 # alive: pulls Kim's overdue HubSpot tasks, resolves context from Notion or
-# a logged HubSpot email, drafts each follow-up with OpenAI, validates it,
-# and posts the digest to Slack. Nothing is ever sent to the prospect
-# automatically, and the drafts (which contain real prospect names and
-# pain points once live credentials are set) are never committed to this
-# repo -- this repo is public, Slack/the workflow artifact are not.
+# a logged HubSpot email, drafts each follow-up with an LLM (Groq by
+# default -- free, no billing required), validates it, and posts the
+# digest to Slack. Nothing is ever sent to the prospect automatically, and
+# the drafts (which contain real prospect names and pain points once live
+# credentials are set) are never committed to this repo -- this repo is
+# public, Slack/the workflow artifact are not.
 #
 # Setup:
 #   1. In this repo: Settings -> Secrets and variables -> Actions, add
-#      HUBSPOT_TOKEN, HUBSPOT_OWNER_ID, NOTION_TOKEN, OPENAI_API_KEY
-#      (see followup-drafter/README.md for how to get each one), and
-#      optionally SLACK_WEBHOOK_URL.
+#      HUBSPOT_TOKEN, HUBSPOT_OWNER_ID, NOTION_TOKEN, GROQ_API_KEY
+#      (see followup-drafter/README.md for how to get each one -- Groq is
+#      free, console.groq.com/keys, no credit card), and optionally
+#      SLACK_WEBHOOK_URL.
 #   2. Adjust the cron schedule below -- it runs in UTC, GitHub Actions has
 #      no timezone setting, so convert Kim's local 7am to UTC yourself
 #      (and re-check it twice a year around DST).
@@ -50,6 +52,7 @@ jobs:
           HUBSPOT_TOKEN: ${{ secrets.HUBSPOT_TOKEN }}
           HUBSPOT_OWNER_ID: ${{ secrets.HUBSPOT_OWNER_ID }}
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: npm run generate
@@ -57,7 +60,7 @@ jobs:
       # Kept as a private, access-controlled Actions artifact (30 day
       # retention) for anyone debugging a run -- never committed to git,
       # since this repo is public and drafts can contain real prospect PII
-      # once HUBSPOT_TOKEN/OPENAI_API_KEY are live.
+      # once HUBSPOT_TOKEN/GROQ_API_KEY are live.
       - uses: actions/upload-artifact@v4
         with:
           name: followup-digest-${{ github.run_id }}
