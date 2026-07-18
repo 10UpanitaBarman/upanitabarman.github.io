@@ -17,9 +17,19 @@ const {
 
 // ---------------------------------------------------------------------------
 // Prompt + validation
-// Cold-email principles applied: signal-based personalization (one real
-// detail from the context note, not a generic recap), pain over features,
-// one CTA, no closed loop / no hard sell, short and plain.
+//
+// Revenue Tornado / Demand Compass classification: these are Q3 accounts
+// (low awareness of Amperia specifically, high readiness -- a task already
+// exists because the prospect showed a signal: a conversation, a question,
+// a stated pain point). Q3 calls for speed and precision, not a slow
+// awareness drip: a signal-referenced opener and an immediate, direct CTA
+// are correct here, not a soft "let me know if useful" close. That is why
+// the CTA below is a direct scheduling ask rather than a generic close.
+// "No closed loop" still applies at the sentence level (no manufactured
+// urgency, no last-chance framing) even though the CTA itself is direct.
+// Other cold-email principles applied throughout: signal-based
+// personalization (one real detail from the context note, not a generic
+// recap), pain over features, one CTA only, short and plain.
 // ---------------------------------------------------------------------------
 
 const SYSTEM_PROMPT = `You write short follow-up emails for a life-sciences instrument company's commercial team, to a working scientist. Rules, strictly enforced:
