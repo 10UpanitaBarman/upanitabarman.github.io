@@ -1,0 +1,65 @@
+name: Daily follow-up drafts
+
+# Runs the follow-up drafter pipeline once a day with no server to keep
+# alive: pulls Kim's overdue HubSpot tasks, resolves context from Notion or
+# a logged HubSpot email, drafts each follow-up with OpenAI, validates it,
+# and posts the digest to Slack. Nothing is ever sent to the prospect
+# automatically, and the drafts (which contain real prospect names and
+# pain points once live credentials are set) are never committed to this
+# repo -- this repo is public, Slack/the workflow artifact are not.
+#
+# Setup:
+#   1. In this repo: Settings -> Secrets and variables -> Actions, add
+#      HUBSPOT_TOKEN, HUBSPOT_OWNER_ID, NOTION_TOKEN, OPENAI_API_KEY
+#      (see followup-drafter/README.md for how to get each one), and
+#      optionally SLACK_WEBHOOK_URL.
+#   2. Adjust the cron schedule below -- it runs in UTC, GitHub Actions has
+#      no timezone setting, so convert Kim's local 7am to UTC yourself
+#      (and re-check it twice a year around DST).
+#   3. With no secrets set, this still runs successfully in demo mode and
+#      posts the 3 example prospects, so you can confirm the workflow
+#      itself works before connecting anything real.
+
+on:
+  schedule:
+    # 11:00 UTC = 7:00am US Eastern during EDT (UTC-4). During EST
+    # (UTC-5, roughly Nov-Mar) this fires at 6:00am instead -- adjust to
+    # taste, or split into two schedule entries for exact DST handling.
+    - cron: '0 11 * * 1-5'
+  workflow_dispatch: {} # lets you trigger a run manually from the Actions tab
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: followup-drafter/local
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: followup-drafter/local/package-lock.json
+
+      - run: npm ci
+
+      - name: Generate today's drafts
+        env:
+          HUBSPOT_TOKEN: ${{ secrets.HUBSPOT_TOKEN }}
+          HUBSPOT_OWNER_ID: ${{ secrets.HUBSPOT_OWNER_ID }}
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: npm run generate
+
+      # Kept as a private, access-controlled Actions artifact (30 day
+      # retention) for anyone debugging a run -- never committed to git,
+      # since this repo is public and drafts can contain real prospect PII
+      # once HUBSPOT_TOKEN/OPENAI_API_KEY are live.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: followup-digest-${{ github.run_id }}
+          path: followup-drafter/local/digest.json
+          retention-days: 30

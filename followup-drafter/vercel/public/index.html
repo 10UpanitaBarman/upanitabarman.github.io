@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Follow-Up Drafter</title>
+<style>
+  :root {
+    --bg: #f5f7f6; --surface: #ffffff; --ink: #10201c; --ink-soft: #526059;
+    --border: #d7ded9; --accent: #0a8f6b; --accent-soft: #e3f3ec;
+    --warn: #b3541e; --warn-soft: #fbeee3;
+    --mono: "SF Mono", "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+    --sans: "IBM Plex Sans", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  header.top {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 24px; margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 20px;
+  }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--accent); margin: 0 0 6px; }
+  h1 { font-size: 28px; letter-spacing: -0.01em; margin: 0; font-weight: 650; }
+  .sub { color: var(--ink-soft); font-size: 14px; margin-top: 6px; }
+  .trace { width: 200px; height: 36px; flex-shrink: 0; }
+  .trace path { fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linecap: round;
+    stroke-dasharray: 340; stroke-dashoffset: 340; animation: draw 2.4s ease-out infinite; }
+  @keyframes draw {
+    0% { stroke-dashoffset: 340; opacity: 0.3; }
+    12% { opacity: 1; }
+    55% { stroke-dashoffset: 0; opacity: 1; }
+    100% { stroke-dashoffset: 0; opacity: 0.15; }
+  }
+
+  .status-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 0 26px; gap: 12px; flex-wrap: wrap;
+  }
+  .status-left { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ink-soft); }
+  .mode-badge {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 20px; white-space: nowrap;
+  }
+  .mode-badge.live { background: var(--accent-soft); color: #0a5c44; }
+  .mode-badge.demo { background: #eef1ee; color: var(--ink-soft); }
+
+  button.regen {
+    background: var(--ink); color: #fff; border: none; border-radius: 6px;
+    padding: 10px 16px; font-size: 13.5px; font-weight: 600; cursor: pointer;
+  }
+  button.regen:hover { background: #1c322b; }
+  button.regen:disabled { background: #9aa6a0; cursor: default; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 22px; margin-bottom: 16px;
+  }
+  .card-head {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 14px; gap: 12px;
+  }
+  .name { font-size: 16px; font-weight: 650; margin: 0; }
+  .meta { color: var(--ink-soft); font-size: 13px; margin: 2px 0 0; }
+  .source-tag {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase;
+    background: var(--accent-soft); color: #0a5c44; padding: 3px 9px; border-radius: 20px; white-space: nowrap;
+  }
+  .draft {
+    font-size: 14.5px; line-height: 1.6; white-space: pre-wrap; border: 1px solid var(--border);
+    border-radius: 6px; padding: 14px; background: #fcfdfc; width: 100%; resize: vertical; min-height: 140px;
+    font-family: var(--sans); color: var(--ink);
+  }
+  .draft:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .flags {
+    margin-top: 12px; padding: 10px 12px; border-radius: 6px; font-size: 12.5px;
+    font-family: var(--mono); line-height: 1.6;
+  }
+  .flags.ok { background: var(--accent-soft); color: #0a5c44; }
+  .flags.warn { background: var(--warn-soft); color: var(--warn); }
+  .actions { display: flex; gap: 8px; margin-top: 12px; }
+  button.secondary {
+    flex: 1; background: #fff; border: 1px solid var(--border); color: var(--ink);
+    border-radius: 6px; padding: 9px; font-size: 13px; cursor: pointer;
+  }
+  button.secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+  .empty, .placeholder-list { color: var(--ink-soft); font-size: 13.5px; line-height: 1.6;
+    padding: 40px 6px; text-align: center; }
+
+  .error-banner {
+    background: var(--warn-soft); color: var(--warn); border-radius: 6px;
+    padding: 12px 14px; font-size: 13px; margin-bottom: 18px;
+  }
+
+  .footnote { margin-top: 24px; font-size: 11.5px; color: var(--ink-soft); text-align: center; font-family: var(--mono); }
+
+  @media (max-width: 620px) {
+    header.top { flex-direction: column; align-items: flex-start; }
+    .status-bar { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Commercial / Follow-Up Drafter</p>
+      <h1>Today's drafts</h1>
+      <p class="sub">Pulled from HubSpot, context resolved from Notion or a logged email. Review, edit, send.</p>
+    </div>
+    <svg class="trace" viewBox="0 0 220 40" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,20 L40,20 L52,4 L64,36 L76,20 L90,20 L100,26 L110,14 L120,20 L220,20" />
+    </svg>
+  </header>
+
+  <div class="status-bar">
+    <div class="status-left">
+      <span id="modeBadge" class="mode-badge demo">Loading…</span>
+      <span id="generatedAt"></span>
+    </div>
+    <button class="regen" id="regenBtn" onclick="regenerate()">Regenerate now</button>
+  </div>
+
+  <div id="errorBox"></div>
+  <div id="cardList">
+    <div class="placeholder-list">Loading this morning's drafts…</div>
+  </div>
+
+  <p class="footnote">Runs automatically every weekday morning. Nothing here has been sent.</p>
+</div>
+
+<script>
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.innerText = str;
+  return div.innerHTML;
+}
+
+function renderDigest(digest) {
+  const modeBadge = document.getElementById('modeBadge');
+  const generatedAt = document.getElementById('generatedAt');
+  const cardList = document.getElementById('cardList');
+
+  modeBadge.textContent = digest.liveMode ? 'Live' : 'Demo data';
+  modeBadge.className = 'mode-badge ' + (digest.liveMode ? 'live' : 'demo');
+
+  generatedAt.textContent = digest.generatedAt
+    ? 'Generated ' + new Date(digest.generatedAt).toLocaleString()
+    : 'Not generated yet';
+
+  if (!digest.tasks || digest.tasks.length === 0) {
+    cardList.innerHTML = '<div class="empty">No overdue tasks right now. Nothing to draft.</div>';
+    return;
+  }
+
+  cardList.innerHTML = digest.tasks.map((t, i) => {
+    const flagClass = (t.issues && t.issues.length) ? 'warn' : 'ok';
+    const flagText = (t.issues && t.issues.length)
+      ? '⚠ Flagged: ' + t.issues.join('; ')
+      : '✓ Passed automated checks';
+    const draftId = 'draft-' + i;
+    return `
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <p class="name">${escapeHtml(t.contact.firstName)} ${escapeHtml(t.contact.lastName)}</p>
+            <p class="meta">${escapeHtml(t.contact.jobTitle)} · ${escapeHtml(t.contact.company)} · task ${escapeHtml(t.taskId)}</p>
+          </div>
+          <span class="source-tag">${escapeHtml(t.contextSource)}</span>
+        </div>
+        <textarea class="draft" id="${draftId}">${escapeHtml(t.draft)}</textarea>
+        <div class="flags ${flagClass}">${flagText}</div>
+        <div class="actions">
+          <button class="secondary" onclick="copyDraft('${draftId}')">Copy to clipboard</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function copyDraft(id) {
+  const text = document.getElementById(id).value;
+  navigator.clipboard.writeText(text);
+}
+
+async function loadDigest() {
+  try {
+    const res = await fetch('/api/digest');
+    const digest = await res.json();
+    renderDigest(digest);
+  } catch (err) {
+    document.getElementById('errorBox').innerHTML =
+      `<div class="error-banner">Could not load the digest: ${err.message}</div>`;
+  }
+}
+
+async function regenerate() {
+  const btn = document.getElementById('regenBtn');
+  const errorBox = document.getElementById('errorBox');
+  errorBox.innerHTML = '';
+  btn.disabled = true;
+  btn.textContent = 'Generating…';
+  document.getElementById('cardList').innerHTML =
+    '<div class="placeholder-list">Pulling tasks, resolving context, drafting each email…</div>';
+
+  try {
+    const res = await fetch('/api/generate', { method: 'POST' });
+    const digest = await res.json();
+    if (digest.error) throw new Error(digest.error);
+    renderDigest(digest);
+  } catch (err) {
+    errorBox.innerHTML = `<div class="error-banner">Regeneration failed: ${err.message}</div>`;
+    loadDigest();
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Regenerate now';
+  }
+}
+
+loadDigest();
+</script>
+</body>
+</html>

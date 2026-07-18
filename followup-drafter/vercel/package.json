@@ -1,0 +1,11 @@
+{
+  "name": "followup-drafter-vercel",
+  "version": "1.0.0",
+  "description": "Daily follow-up email drafter, Vercel-native: serverless functions + Vercel Cron + Vercel KV.",
+  "dependencies": {
+    "@vercel/kv": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
