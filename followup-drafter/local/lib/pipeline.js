@@ -109,10 +109,15 @@ async function hubspotFetch(method, url, body) {
 }
 
 async function fetchOverdueTasks() {
-  // Assumes two custom task properties: context_source ("notion" |
-  // "hubspot_email" | "manual") and context_ref (a Notion page id or a
-  // HubSpot email engagement id). Set these when the task is logged. Which
-  // contact the task is about comes from HubSpot's own task-contact
+  // Where the context note lives: the task's own Notes field
+  // (hs_task_body), a standard field every HubSpot portal has -- no custom
+  // properties required (custom properties on Tasks are gated behind paid
+  // HubSpot tiers, and a free/trial portal will not offer them at all).
+  // Log the task body as either:
+  //   - the context note itself (treated as contextSource: manual), or
+  //   - "notion: <page id>" / "email: <engagement id>" to point elsewhere,
+  //     resolved via resolveContext() below.
+  // Which contact the task is about comes from HubSpot's own task-contact
   // association (set automatically when a task is created against a
   // contact record in the UI) -- not a hand-maintained property, so there
   // is nothing extra to remember to fill in per task.
@@ -123,7 +128,7 @@ async function fetchOverdueTasks() {
         { propertyName: 'hubspot_owner_id', operator: 'EQ', value: HUBSPOT_OWNER_ID },
       ],
     }],
-    properties: ['hs_task_subject', 'context_source', 'context_ref'],
+    properties: ['hs_task_subject', 'hs_task_body'],
   };
   const result = await hubspotFetch('POST', 'https://api.hubapi.com/crm/v3/objects/tasks/search', body);
   const tasks = [];
@@ -132,14 +137,19 @@ async function fetchOverdueTasks() {
     const contactId = await fetchAssociatedContactId(r.id);
     if (!contactId) continue;
     const contact = await fetchContact(contactId);
-    tasks.push({
-      taskId: r.id,
-      contact,
-      contextSource: p.context_source || 'manual',
-      contextRef: p.context_ref || '',
-    });
+    const { contextSource, contextRef } = parseTaskBody(p.hs_task_body);
+    tasks.push({ taskId: r.id, contact, contextSource, contextRef });
   }
   return tasks;
+}
+
+function parseTaskBody(body) {
+  const text = (body || '').trim();
+  const notionMatch = text.match(/^notion:\s*(\S+)/i);
+  if (notionMatch) return { contextSource: 'notion', contextRef: notionMatch[1] };
+  const emailMatch = text.match(/^(?:hubspot_)?email:\s*(\S+)/i);
+  if (emailMatch) return { contextSource: 'hubspot_email', contextRef: emailMatch[1] };
+  return { contextSource: 'manual', contextRef: text };
 }
 
 async function fetchAssociatedContactId(taskId) {

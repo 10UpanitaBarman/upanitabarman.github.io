@@ -30,15 +30,15 @@ anything real.
 6. Find Kim's HubSpot user/owner ID: **Settings** -> **Users & Teams** ->
    click her name -> the ID is in the page URL. Put it in `.env` as
    `HUBSPOT_OWNER_ID`.
-7. On any task you want this to pick up, add two custom properties (one-time
-   setup in **Settings -> Properties -> Task properties**):
-   - `context_source` (a dropdown or text field: `notion`, `hubspot_email`,
-     or `manual`)
-   - `context_ref` (text field: a Notion page ID, or a HubSpot logged email's
-     engagement ID)
-
-   Set both when you log the task. This is what tells the app where to find
-   that prospect's context.
+7. No custom properties to create. On any task you want this to pick up,
+   type the context note straight into the task's own **Notes** field
+   (`hs_task_body`) -- a standard field on every portal, including
+   free/trial ones (custom properties on Tasks are gated behind paid
+   HubSpot tiers, so this deliberately avoids needing one). To pull
+   context from Notion or a logged email instead of typing it, put one of
+   these as the Notes text instead:
+   - `notion: <page id>`
+   - `email: <engagement id>`
 
 ## Connect Notion
 
@@ -53,7 +53,8 @@ anything real.
    integration by name. Do this for every page you want the app to read.
 6. Get the page ID from the page's URL: it's the 32-character string right
    before any `?`, e.g. `notion.so/Priya-Notes-1a2b3c4d5e6f7g8h...` — the
-   `1a2b3c4d...` part is the ID. That's the `context_ref` value for that task.
+   `1a2b3c4d...` part is the ID. Put `notion: 1a2b3c4d...` as that task's
+   Notes text.
 
 ## Connect OpenAI
 
@@ -110,8 +111,8 @@ Everything that calls HubSpot, Notion, or OpenAI makes real HTTP requests.
 The pipeline itself (`fetchOverdueTasks`, context resolution, the OpenAI
 call, validation) lives in `lib/pipeline.js`, shared by `server.js` (the
 Express app + in-process cron) and `run-once.js` (the headless entrypoint
-GitHub Actions calls). The only assumption baked in is the two custom
-HubSpot task properties (`context_source`, `context_ref`) described above —
-replace that logic in `fetchOverdueTasks()` in `lib/pipeline.js` if you'd
-rather resolve the linked contact and context a different way (e.g. via
-HubSpot's associations API directly).
+GitHub Actions calls). The only assumption baked in is `parseTaskBody()`'s
+`notion: <id>` / `email: <id>` convention on the task's Notes field
+described above — replace that logic in `lib/pipeline.js` if you'd rather
+signal context source a different way (e.g. custom properties, if you're
+on a HubSpot tier that supports them on Tasks).

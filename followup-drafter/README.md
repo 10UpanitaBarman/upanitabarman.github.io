@@ -51,14 +51,16 @@ Each folder has its own README with exact setup steps for that path.
 3. Save, copy the access token (only shown once) -> this is `HUBSPOT_TOKEN`.
 4. Find Kim's owner ID: **Settings** -> **Users & Teams** -> click her name
    -> the ID is in the URL -> this is `HUBSPOT_OWNER_ID`.
-5. Create two custom task properties, one time, in **Settings ->
-   Properties -> Task properties**:
-   - `context_source` -- text or dropdown: `notion`, `hubspot_email`, or
-     `manual`
-   - `context_ref` -- text: a Notion page ID, or a HubSpot logged email's
-     engagement ID
-   Set both whenever you log a follow-up task, so the app knows where to
-   pull that prospect's context from.
+5. No custom properties to create. The context note goes straight into the
+   task's own **Notes** field (`hs_task_body`) -- a standard field on every
+   portal, including free/trial ones (custom properties on Tasks are
+   gated behind paid HubSpot tiers, so this project deliberately avoids
+   needing one). When you log a follow-up task, type the pain-point note
+   directly into Notes. To pull context from elsewhere instead of typing
+   it, put one of these as the Notes text:
+   - `notion: <page id>` -- pulls from that Notion page
+   - `email: <engagement id>` -- pulls from that logged HubSpot email
+   Anything else in Notes is used as the context note itself.
 6. Which contact a task is about comes from HubSpot's own task-contact
    association (set automatically whenever you create the task from the
    contact record's activity timeline, which is the normal way to log a
@@ -69,11 +71,11 @@ Each folder has its own README with exact setup steps for that path.
 [`.github/workflows/seed-demo-data.yml`](../.github/workflows/seed-demo-data.yml)
 (manual trigger only, from this repo's Actions tab) creates 3 fictional
 contacts and 3 overdue tasks -- the same Priya/Marcus/Elena examples used in
-demo mode, but as real HubSpot records with `context_source: manual`, so no
-Notion setup is required to see the live path work end to end. It needs the
-same `HUBSPOT_TOKEN`/`HUBSPOT_OWNER_ID` repo secrets as the daily workflow,
-plus two extra scopes on the private app that the daily run itself doesn't
-need: `crm.objects.contacts.write` and `crm.schemas.tasks.write`. See
+demo mode, but as real HubSpot records, context note written straight into
+each task's Notes field, so no Notion setup is required to see the live
+path work end to end. It needs the same `HUBSPOT_TOKEN`/`HUBSPOT_OWNER_ID`
+repo secrets as the daily workflow, plus one extra scope on the private app
+that the daily run itself doesn't need: `crm.objects.contacts.write`. See
 [`followup-drafter/local/seed-demo-data.js`](./local/seed-demo-data.js) for
 exactly what it creates.
 

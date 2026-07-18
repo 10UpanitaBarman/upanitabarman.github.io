@@ -4,9 +4,11 @@
  * One-time setup script: creates 3 realistic (fictional) contacts and 3
  * overdue tasks in your real HubSpot portal, so `npm run generate` (or the
  * daily GitHub Actions run) has something real to pull instead of running
- * in demo mode. Uses `context_source: 'manual'` for all three, so no
- * Notion or logged-email setup is required to see the live path work end
- * to end -- the context note is stored directly on the task.
+ * in demo mode. The context note is written straight into the task's own
+ * Notes field (hs_task_body) -- a standard field on every portal, no
+ * custom properties required (those are gated behind paid HubSpot tiers
+ * for Task/engagement objects, and a free/trial portal will not offer
+ * them at all).
  *
  * Why this exists as a script rather than being done by hand: HubSpot
  * write access is scoped to your own private app token, which only you
@@ -15,8 +17,8 @@
  *
  * Requires HUBSPOT_TOKEN and HUBSPOT_OWNER_ID (same private app token and
  * scopes as everything else in this project -- see ../README.md -- plus
- * `crm.objects.contacts.write` and `crm.schemas.tasks.write`, which this
- * script needs but run-once.js/server.js do not).
+ * `crm.objects.contacts.write`, which this script needs but
+ * run-once.js/server.js do not).
  *
  * Usage: node seed-demo-data.js
  * Safe to run more than once for the contacts (looked up by email first).
@@ -73,43 +75,6 @@ const PROSPECTS = [
 ];
 
 // ---------------------------------------------------------------------------
-// Custom task properties this project depends on (context_source, context_ref).
-// Created here if missing; a 409 means they already exist, which is fine.
-// ---------------------------------------------------------------------------
-
-async function ensureTaskProperty(name, options) {
-  try {
-    await hubspotFetch('POST', 'https://api.hubapi.com/crm/v3/properties/tasks', {
-      name,
-      label: options.label,
-      type: options.type,
-      fieldType: options.fieldType,
-      groupName: 'task_information',
-      ...(options.optionsList ? { options: options.optionsList } : {}),
-    });
-    console.log(`Created task property: ${name}`);
-  } catch (err) {
-    if (err.message.includes('409')) {
-      console.log(`Task property already exists: ${name}`);
-    } else {
-      throw err;
-    }
-  }
-}
-
-async function ensureTaskProperties() {
-  await ensureTaskProperty('context_source', {
-    label: 'Context source', type: 'enumeration', fieldType: 'select',
-    optionsList: [
-      { label: 'Notion', value: 'notion' },
-      { label: 'HubSpot logged email', value: 'hubspot_email' },
-      { label: 'Manual', value: 'manual' },
-    ],
-  });
-  await ensureTaskProperty('context_ref', { label: 'Context reference', type: 'string', fieldType: 'text' });
-}
-
-// ---------------------------------------------------------------------------
 // Contact: reuse by email if it already exists, otherwise create.
 // ---------------------------------------------------------------------------
 
@@ -137,8 +102,9 @@ async function upsertContact(p) {
 
 // ---------------------------------------------------------------------------
 // Task: overdue (due yesterday), owned by HUBSPOT_OWNER_ID, carrying the
-// context note directly (context_source: manual), then associated to the
-// contact via HubSpot's real task-contact association.
+// context note directly in hs_task_body (parsed as contextSource: manual
+// by lib/pipeline.js), then associated to the contact via HubSpot's real
+// task-contact association.
 // ---------------------------------------------------------------------------
 
 async function createOverdueTask(p, contactId) {
@@ -146,12 +112,11 @@ async function createOverdueTask(p, contactId) {
   const created = await hubspotFetch('POST', 'https://api.hubapi.com/crm/v3/objects/tasks', {
     properties: {
       hs_task_subject: p.taskSubject,
+      hs_task_body: p.contextNote,
       hs_task_status: 'NOT_STARTED',
       hs_task_priority: 'MEDIUM',
       hs_timestamp: String(yesterday),
       hubspot_owner_id: HUBSPOT_OWNER_ID,
-      context_source: 'manual',
-      context_ref: p.contextNote,
     },
   });
   console.log(`Created task: ${p.taskSubject} (${created.id})`);
@@ -163,7 +128,6 @@ async function createOverdueTask(p, contactId) {
 }
 
 async function main() {
-  await ensureTaskProperties();
   for (const p of PROSPECTS) {
     const contactId = await upsertContact(p);
     await createOverdueTask(p, contactId);
